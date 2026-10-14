@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Trauma On-Call</title>
+<style>
+  :root {
+    --uofl-red: #C41230;
+    --uofl-red-dark: #a00f28;
+    --uofl-red-light: #fdf0f2;
+    --bg: #f5f5f5;
+    --card: #ffffff;
+    --header: #000000;
+    --header-text: #ffffff;
+    --text: #111111;
+    --subtext: #666666;
+    --border: #e0e0e0;
+    --today-bg: #fdf0f2;
+    --today-border: #C41230;
+    --tab-text: #888888;
+    --section-header: #444444;
+    --empty: #aaaaaa;
+    --btn-bg: #C41230;
+    --btn-text: #ffffff;
+    --shadow: 0 1px 3px rgba(0,0,0,0.12);
+    --shadow-md: 0 4px 8px rgba(0,0,0,0.15);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #111111;
+      --card: #1e1e1e;
+      --header: #000000;
+      --header-text: #ffffff;
+      --text: #f0f0f0;
+      --subtext: #999999;
+      --border: #333333;
+      --today-bg: #2a0a0f;
+      --today-border: #e8394f;
+      --tab-text: #666666;
+      --section-header: #aaaaaa;
+      --btn-bg: #C41230;
+      --btn-text: #ffffff;
+      --shadow: 0 1px 3px rgba(0,0,0,0.5);
+      --shadow-md: 0 4px 8px rgba(0,0,0,0.4);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  #app-header {
+    background: var(--header);
+    color: var(--header-text);
+    padding: 12px 16px 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-md);
+  }
+  .header-row1 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .app-title { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+  .app-subtitle { font-size: 11px; color: #94a3b8; margin-top: 1px; }
+  #today-btn {
+    background: var(--btn-bg);
+    color: var(--btn-text);
+    border: 1px solid #475569;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  #today-btn:active { opacity: 0.7; }
+  .tabs { display: flex; gap: 4px; }
+  .tab-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    color: var(--tab-text);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 0 10px;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .tab-btn.active {
+    color: var(--header-text);
+    border-bottom-color: #3b82f6;
+  }
+  #content {
+    padding: 12px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .date-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .nav-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    width: 40px; height: 40px;
+    font-size: 18px;
+    cursor: pointer;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow);
+    transition: opacity 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .nav-btn:active { opacity: 0.6; }
+  .date-label {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    text-align: center;
+    flex: 1;
+  }
+  .date-label .date-sub {
+    display: block;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--subtext);
+    margin-top: 1px;
+  }
+  .week-strip {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 14px;
+  }
+  .strip-day {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 6px 2px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .strip-day.selected {
+    border-color: var(--today-border);
+    background: var(--today-bg);
+  }
+  .strip-day.is-today .strip-dnum {
+    background: #3b82f6;
+    color: white;
+    border-radius: 50%;
+    width: 24px; height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+  }
+  .strip-dow {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--subtext);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 3px;
+  }
+  .strip-dnum {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+  }
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--section-header);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin: 14px 0 6px;
+    padding-left: 2px;
+  }
+  .role-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 13px 15px;
+    margin-bottom: 7px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: var(--shadow);
+  }
+  .role-dot {
+    width: 11px; height: 11px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .role-info { flex: 1; min-width: 0; }
+  .role-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--subtext);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+  }
+  .role-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .role-name.empty {
+    color: var(--empty);
+    font-weight: 400;
+    font-style: italic;
+    font-size: 14px;
+  }
+  .week-day-card {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .week-day-card.is-today {
+    border-color: var(--today-border);
+    background: var(--today-bg);
+  }
+  .week-day-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .week-dow {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--subtext);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .week-date { font-size: 18px; font-weight: 800; color: var(--text); }
+  .today-badge {
+    background: #3b82f6;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 6px;
+    padding: 2px 7px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .week-role-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 5px 0;
+  }
+  .week-role-row + .week-role-row { border-top: 1px solid var(--border); }
+  .week-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .week-role-label {
+    font-size: 11px;
+    color: var(--subtext);
+    flex: 0 0 118px;
+    font-weight: 500;
+  }
+  .week-role-name { font-size: 13px; font-weight: 700; color: var(--text); flex: 1; }
+  .loading {
+    text-align: center;
+    color: var(--subtext);
+    font-size: 15px;
+    padding: 60px 20px;
+  }
+  .error {
+    text-align: center;
+    color: #dc2626;
+    font-size: 14px;
+    padding: 40px 20px;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<div id="app-header">
+  <div class="header-row1">
+    <div>
+      <div class="app-title">Trauma On-Call</div>
+      <div class="app-subtitle">UofL — Keskey Lab</div>
+    </div>
+    <button id="today-btn" onclick="goToday()">Today</button>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-day" onclick="switchTab('day')">Day View</button>
+    <button class="tab-btn" id="tab-week" onclick="switchTab('week')">Week View</button>
+  </div>
+</div>
+
+<div id="content"><div class="loading">Loading schedule&hellip;</div></div>
+
+<script>
+// ── Schedule sources ───────────────────────────────────────────────────────
+// Attending schedule — Google Apps Script Web App URL
+const SCHEDULE_URL = 'https://script.google.com/macros/s/AKfycbygbt3GP6O1f3bAMxfVhk_H_Q7qnZZOs6dLuHN6C0Gpjgf7chk7JG_Qi2vJh4EvWGtY_w/exec';
+
+// Resident schedule — paste your RESIDENT Apps Script URL here after deploying.
+// Leave blank ('') to load from resident_schedule.json in the same folder.
+const RESIDENT_URL = '';
+
+// ── Configuration ──────────────────────────────────────────────────────────
+const ROLES = [
+  // ── Trauma Attendings ──────────────────────────────────────────────────
+  {key:'tr1',              label:'Trauma 1 — Day Attending',           color:'#C41230', section:'Trauma Teams'},
+  {key:'tr2',              label:'Trauma 2 — Day Attending',           color:'#C41230', section:'Trauma Teams'},
+  // ── Trauma Residents ──────────────────────────────────────────────────
+  {key:'chief_pm',         label:'Trauma Chief On-Call',    weekLabel:'Chief PM',    color:'#e05c72', section:'Trauma Residents'},
+  {key:'wedge_pm',         label:'Trauma Wedge On-Call',    weekLabel:'Wedge PM',    color:'#e05c72', section:'Trauma Residents'},
+  {key:'icu_pm',           label:'Trauma ICU On-Call',      weekLabel:'ICU PM',      color:'#e05c72', section:'Trauma Residents'},
+  {key:'intern_pm',        label:'Trauma Intern On-Call',   weekLabel:'Intern PM',   color:'#e05c72', section:'Trauma Residents'},
+  // ── On-Call Attending ─────────────────────────────────────────────────
+  {key:'trauma_call_day',  label:'Trauma PM',                           color:'#1d4ed8', section:'On-Call'},
+  // ── Clinics ───────────────────────────────────────────────────────────
+  {key:'trauma_clinic',    label:'Trauma Clinic',                       color:'#15803d', section:'Clinics', daysOnly:[2]},
+  {key:'burn_clinic',      label:'Burn Clinic',                         color:'#15803d', section:'Clinics', daysOnly:[3]},
+  // ── ACS Attendings ────────────────────────────────────────────────────
+  {key:'jewish_day',       label:'Jewish / Norton / Kindred — Day',    color:'#6d28d9', section:'Acute Care Surgery'},
+  {key:'jewish_night',     label:'Jewish / Norton / Kindred — Night',  color:'#6d28d9', section:'Acute Care Surgery'},
+  // ── ACS Residents ─────────────────────────────────────────────────────
+  {key:'acs_chief',        label:'ACS Chief On-Call',       weekLabel:'ACS Chief',   color:'#9333ea', section:'ACS Residents'},
+  {key:'jewish_intern_pm', label:'Jewish Intern On-Call',   weekLabel:'Jewish Intern',color:'#9333ea', section:'ACS Residents'},
+  {key:'norton_intern_pm', label:'Norton Intern On-Call',   weekLabel:'Norton Intern',color:'#9333ea', section:'ACS Residents'},
+];
+
+const DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS = ['January','February','March','April','May','June','July',
+                'August','September','October','November','December'];
+
+// ── State ──────────────────────────────────────────────────────────────────
+let SCHEDULE = {};
+let attendingReady = false;
+let residentReady  = !RESIDENT_URL; // if no URL, skip waiting
+let currentTab = 'day';
+let selectedDate = new Date();
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function toKey(d) {
+  return d.getFullYear() + '-' +
+    String(d.getMonth()+1).padStart(2,'0') + '-' +
+    String(d.getDate()).padStart(2,'0');
+}
+function addDays(d, n) { const r=new Date(d); r.setDate(r.getDate()+n); return r; }
+function startOfWeek(d) { const r=new Date(d); r.setDate(r.getDate()-r.getDay()); return r; }
+function isToday(d) {
+  const t=new Date();
+  return d.getFullYear()===t.getFullYear() && d.getMonth()===t.getMonth() && d.getDate()===t.getDate();
+}
+
+// ── Controls ───────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tab-day').classList.toggle('active', tab==='day');
+  document.getElementById('tab-week').classList.toggle('active', tab==='week');
+  render();
+}
+function goToday()      { selectedDate = new Date(); render(); }
+function changeDay(n)   { selectedDate = addDays(selectedDate, n); render(); }
+function changeWeek(n)  { selectedDate = addDays(selectedDate, n*7); render(); }
+function selectDay(y,m,d) {
+  selectedDate = new Date(y, m, d);
+  currentTab = 'day';
+  document.getElementById('tab-day').classList.add('active');
+  document.getElementById('tab-week').classList.remove('active');
+  render();
+}
+
+function getWeekLabel() {
+  const sun = startOfWeek(selectedDate);
+  const sat = addDays(sun, 6);
+  if (sun.getMonth()===sat.getMonth())
+    return MONTHS[sun.getMonth()]+' '+sun.getDate()+'–'+sat.getDate()+', '+sun.getFullYear();
+  return MONTHS[sun.getMonth()]+' '+sun.getDate()+' – '+MONTHS[sat.getMonth()]+' '+sat.getDate()+', '+sat.getFullYear();
+}
+
+// ── Render: Day ────────────────────────────────────────────────────────────
+function renderDay() {
+  const d = selectedDate;
+  const key = toKey(d);
+  const data = SCHEDULE[key] || {};
+  const weekSun = startOfWeek(d);
+  let html = '';
+
+  html += '<div class="date-nav">';
+  html += '<button class="nav-btn" onclick="changeDay(-1)">&#8249;</button>';
+  html += '<div class="date-label">'+DAYS_SHORT[d.getDay()]+', '+MONTHS[d.getMonth()]+' '+d.getDate();
+  if (isToday(d)) html += '<span class="date-sub">Today</span>';
+  html += '</div><button class="nav-btn" onclick="changeDay(1)">&#8250;</button></div>';
+
+  html += '<div class="week-strip">';
+  for (let i=0;i<7;i++) {
+    const sd=addDays(weekSun,i);
+    const sy=sd.getFullYear(), sm=sd.getMonth(), sday=sd.getDate();
+    html += '<div class="strip-day'+(toKey(sd)===key?' selected':'')+(isToday(sd)?' is-today':'')+'" onclick="selectDay('+sy+','+sm+','+sday+')">';
+    html += '<div class="strip-dow">'+DAYS_SHORT[sd.getDay()]+'</div>';
+    html += '<div class="strip-dnum">'+sd.getDate()+'</div></div>';
+  }
+  html += '</div>';
+
+  const sections = {};
+  ROLES.forEach(function(r){ if(!sections[r.section]) sections[r.section]=[]; sections[r.section].push(r); });
+
+  Object.keys(sections).forEach(function(sec) {
+    const applicable = sections[sec].filter(function(r){ return !r.daysOnly || r.daysOnly.indexOf(d.getDay())!==-1; });
+    if (!applicable.length) return;
+    html += '<div class="section-label">'+sec+'</div>';
+    applicable.forEach(function(r) {
+      const val = data[r.key];
+      html += '<div class="role-card"><div class="role-dot" style="background:'+r.color+'"></div>';
+      html += '<div class="role-info"><div class="role-label">'+r.label+'</div>';
+      html += val ? '<div class="role-name">'+val+'</div>' : '<div class="role-name empty">Not scheduled</div>';
+      html += '</div></div>';
+    });
+  });
+
+  document.getElementById('content').innerHTML = html;
+}
+
+// ── Render: Week ───────────────────────────────────────────────────────────
+function renderWeek() {
+  const sun = startOfWeek(selectedDate);
+  let html = '';
+
+  html += '<div class="date-nav">';
+  html += '<button class="nav-btn" onclick="changeWeek(-1)">&#8249;</button>';
+  html += '<div class="date-label" style="font-size:15px">'+getWeekLabel()+'</div>';
+  html += '<button class="nav-btn" onclick="changeWeek(1)">&#8250;</button></div>';
+
+  for (let i=0;i<7;i++) {
+    const d=addDays(sun,i);
+    const key=toKey(d), data=SCHEDULE[key]||{};
+    const sy=d.getFullYear(), sm=d.getMonth(), sday=d.getDate();
+    html += '<div class="week-day-card'+(isToday(d)?' is-today':'')+'" onclick="selectDay('+sy+','+sm+','+sday+')">';
+    html += '<div class="week-day-header">';
+    html += '<div><div class="week-dow">'+DAYS_SHORT[d.getDay()]+'</div><div class="week-date">'+MONTHS[d.getMonth()].slice(0,3)+' '+d.getDate()+'</div></div>';
+    if (isToday(d)) html += '<div class="today-badge">Today</div>';
+    html += '</div>';
+
+    ROLES.forEach(function(r) {
+      if (r.daysOnly && r.daysOnly.indexOf(d.getDay())===-1) return;
+      const val=data[r.key];
+      if (!val) return;
+      html += '<div class="week-role-row">';
+      html += '<div class="week-dot" style="background:'+r.color+'"></div>';
+      html += '<div class="week-role-label">'+(r.weekLabel||r.label.split('—')[0].trim())+'</div>';
+      html += '<div class="week-role-name">'+val+'</div></div>';
+    });
+
+    if (!ROLES.some(function(r){ return (!r.daysOnly||r.daysOnly.indexOf(d.getDay())!==-1) && data[r.key]; }))
+      html += '<div style="color:var(--subtext);font-size:13px;font-style:italic;padding:4px 0">No data</div>';
+
+    html += '</div>';
+  }
+  document.getElementById('content').innerHTML = html;
+}
+
+// ── Render dispatch ────────────────────────────────────────────────────────
+function render() {
+  if (!attendingReady) return;
+  if (currentTab==='day') renderDay(); else renderWeek();
+}
+
+// ── Merge helper ──────────────────────────────────────────────────────────
+function mergeSchedule(data) {
+  Object.keys(data).forEach(function(k) {
+    if (!SCHEDULE[k]) SCHEDULE[k] = {};
+    Object.assign(SCHEDULE[k], data[k]);
+  });
+}
+
+function tryRender() {
+  if (attendingReady && residentReady) render();
+}
+
+// ── Load attending schedule ────────────────────────────────────────────────
+var attendingSrc = SCHEDULE_URL || 'schedule.json';
+fetch(attendingSrc)
+  .then(function(r){ if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+  .then(function(data){
+    if (data.error) throw new Error(data.error);
+    mergeSchedule(data);
+    attendingReady = true;
+    tryRender();
+  })
+  .catch(function(err){
+    document.getElementById('content').innerHTML =
+      '<div class="error"><strong>Could not load schedule data</strong><br><br>'+
+      (SCHEDULE_URL
+        ? 'Check that your Google Apps Script URL is correct and the deployment is set to "Anyone".'
+        : 'Make sure schedule.json is in the same folder as index.html.')+
+      '<br><br>(Error: '+err.message+')</div>';
+  });
+
+// ── Load resident schedule (optional — silently skipped if URL missing) ────
+if (RESIDENT_URL) {
+  fetch(RESIDENT_URL)
+    .then(function(r){ if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(function(data){
+      if (data.error) throw new Error(data.error);
+      mergeSchedule(data);
+    })
+    .catch(function(){}) // resident failure is non-fatal
+    .finally(function(){ residentReady = true; tryRender(); });
+} else {
+  // Try static fallback file
+  fetch('resident_schedule.json')
+    .then(function(r){ if (!r.ok) throw new Error(); return r.json(); })
+    .then(function(data){ mergeSchedule(data); })
+    .catch(function(){})
+    .finally(function(){ residentReady = true; tryRender(); });
+}
+</script>
+</body>
+</html>
